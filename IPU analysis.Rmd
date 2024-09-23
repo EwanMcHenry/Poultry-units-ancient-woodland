@@ -1,0 +1,126 @@
+---
+title: "IPU threat to Ancient woodland"
+author: "Dr. Ewan McHenry and Alastair Hotchkiss"
+date: "19/04/2022"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    theme: united
+---
+<style>
+.html-widget {
+  max-width: 1000px;
+  margin: auto;
+}
+.main-container {
+  max-width: 1800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+</style>
+```{r global-options, include=FALSE}
+knitr::opts_chunk$set(#fig.width=12, fig.height=8, fig.path='Figs/',
+                      echo=FALSE, warning=FALSE, message=FALSE)
+```
+```{r load needed, include=FALSE}
+setwd("D:\\Users\\Ewan McHenry\\OneDrive - the Woodland Trust\\GIS")
+
+# libraries ----
+library(tidyverse)
+library(sf) # for gis
+library(units) # for set_units()
+library(viridis)
+library(htmltools)
+library(RColorBrewer)
+library(ggpubr)
+library(plotly)
+library(scales)#prety_breaks()
+#devtools::install_github("ropensci/PostcodesioR")
+library(PostcodesioR)
+library(leaflet)
+library(htmltools)
+library(data.table)
+library(htmlwidgets)
+library(leaflet.providers)
+
+source("D:\\Users\\Ewan McHenry\\OneDrive - the Woodland Trust\\GIS\\Ewans functions.R")
+
+#source("misc GIS jobs\\chicken sheds\\chicken sheds 01.R")
+# load objects ----
+load(file =  "misc GIS jobs\\chicken sheds\\r_objects.RData")
+```
+
+**Intensive Poultry units (IPUs) are significant point sources of  nitrogen pollution**, which damages nearby woodland ecological condition and is particularly harmful to the lichens and bryophytes of ancient woodland. This report presents an analysis of IPU applications approved between `r constants$cut.year` and 2022 within Herefordshire, Telford and Wrekin, Shropshire and Powys (`r dim(chck)[1]` approved applications), focusing on individual IPU farm locations (**total farms = `r format(dim(chck2)[1], big.mark=",")`**), the number of sheds on each farm (**total sheds = `r format(constants$n.tot.sheds, big.mark=",")`**), and their proximity to ancient woodland.  
+A rough indication of threat level is also presented which considers the area of ancient woodland within `r constants$overlap.dist/1000` km of an IPU. Maps are provided to give an indication of the spatial spread of impacts.
+
+# IPU and Ancient Woodland Map
+This map shows the locations of IPUs, anceint woodland, and ancient woodland threatened by IPUs (within `r constants$overlap.dist/1000` km of an IPU; **clickable tabs in map key**).  
+The map provides a lot of detail on the locations ancient woodland and IPUs (as well as the number of sheds and birds approved at each location), the maps that follow below give a more general picture of the spatial spread of these features.  
+  
+Note: ancient woodland polygons are simplified to speed loading. 
+```{r IPU map, echo = FALSE, fig.align= "center", fig.height= 5, out.width = "60%"}
+ipus.m
+```
+
+# Ancient woodland distribution  
+Click-and-drag to zoom, double click to reset.
+```{r heatmaps, echo = FALSE, fig.align= "center",  out.width= "80%", out.height= "40%"}
+plty.aw.hexmap
+```
+Total ancient woodland area = **`r format(round(as.numeric(constants$tot.awi), 0), big.mark=",")` ha**  
+Ancient woodland here is defined by the Ancient woodland inventory (AWI) and includes both Ancient Semi Natural Woodland and Plantations of Ancient Woodland Sites. All AWI records within `r constants$awi.buff/1000` km of the study area are considered here, to account for impacts beyond the direct area of interest.   
+
+# Ancient woodland threatened by IPUs
+The distance over which IPUs impact ancient woodland is not known with certainty and impacted by complex factors such as prevailing wind direction. This figure and associated data gives and indication of the area of ancient woodland threatened by the approved IPUs considered in this analysis, when considering that threat to be important at different different distances.
+
+Of the `r format(round(constants$tot.awi,0), big.mark=",")` ha of ancient woodland at least: 
+
+- **`r format(round(awi.chk.areas$awiarea[awi.chk.areas$distance == constants$overlap.dist], 0), big.mark=",")` ha is within `r constants$overlap.dist/1000` km of an IPU (`r format(round(100*awi.chk.areas$awiarea[awi.chk.areas$distance == constants$overlap.dist]/constants$tot.awi,0), big.mark=",")`%)**  
+- **`r format(round(awi.chk.areas$awiarea[awi.chk.areas$distance == 800], 0), big.mark=",")` ha is within `r 800/1000` km of an IPU (`r format(round(100*awi.chk.areas$awiarea[awi.chk.areas$distance == 800]/constants$tot.awi,0), big.mark=",")`%)**  
+- **`r format(round(awi.chk.areas$awiarea[awi.chk.areas$distance == 400], 0), big.mark=",")` ha is within `r 400/1000` km of an IPU (`r format(round(100*awi.chk.areas$awiarea[awi.chk.areas$distance == 400]/constants$tot.awi,0), big.mark=",")`%)**  
+
+
+The threat to ancient woodland by IPUs is not uniform however, with **at least `r format(round(max(hex.grid.overlap$awipuoverlap.peraw %>% quantile(prob = c(0.95))),0), big.mark=",")`% of ancient woodland threatened in the 5% worst affected areas**. The heatmap below gives an indication where the greatest areas of ancient woodland are potentially threatened (i.e. within `r constants$overlap.dist` m of an IPU).
+
+```{r aw distance, echo = FALSE, out.width= "50%", out.height= 200 , fig.show='hold', fig.align='center'}
+plty.aw.ipu.dist.area.col
+```
+## IPU threat distribution  
+Click-and-drag to zoom, double click to reset.  
+```{r aw threat heatmap, echo = FALSE, out.width= "80%", out.height= "50%" , fig.show='hold', fig.align='center'}
+plty.aw.threatned.hexmap
+```
+
+# IPU distribution and distance to ancient woodland
+Applications for IPUs should consider potential threat to neighboring ancient woodland. The number of approved IPU sites and individual sheds gives an indication of how proximity to ancient woodland actually prevents IPUs from being approved in practice. The following subsections present maps of IPU farm and individual shed density, and their distance to the nearest ancient woodland. 
+
+Of `r dim(chck2)[1]` IPU farms approved **`r sum(chck2$awi.dist<500)` farms were within 500 m of ancient woodland.  **  
+Of `r dim(chck3)[1]` sheds approved **`r sum(chck3$awi.dist<500)` sheds were within 500 m of ancient woodland.**  
+
+Ideally the number of approved IPU would be lower in areas with more ancient woodland (a negative correlation), this is not the case at the scale of the `r constants$hexdist.h/1000` km grid considered here, although at least IPUs are not concentrated in areas of high ancient woodland density (Pearson's corr = `r cor(hex.grid01$awi.area, hex.grid01$n.farms) %>% round(2)` and `r cor(hex.grid01$awi.area, hex.grid01$n.sheds) %>% round(2)` for IPU farms and sheds, respectively; N = `r dim(hex.grid01)[1]` grid cells).  
+
+## Distance to ancient woodland  {.tabset .tabset-fade .tabset-pills}
+clickable tabs  
+
+### Farms  
+```{r aw farms nearest distance, echo = FALSE, out.width= "80%", out.height= 200 ,  fig.show='hold', fig.align='center'}
+plty.farms.mindist 
+```
+### Sheds  
+```{r aw sheds nearest distance, echo = FALSE, out.width= "80%", out.height= 200 ,  fig.show='hold', fig.align='center'}
+plty.sheds.mindist
+```
+## IPU distribution  {.tabset .tabset-fade .tabset-pills}
+clickable tabs  
+
+### Farms  
+Click-and-drag to zoom, double click to reset.  
+```{r aw farms hexmap, echo = FALSE, out.width= "80%", out.height= "40%" , fig.show='hold', fig.align='center'}
+plty.farm.hexmap
+```
+### Sheds  
+Click-and-drag to zoom, double click to reset.  
+```{r aw sheds hexmap, echo = FALSE, out.width= "80%", out.height= "40%" , fig.show='hold', fig.align='center'}
+plty.sheds.hexmap
+```
